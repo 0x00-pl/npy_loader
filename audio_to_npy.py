@@ -1,5 +1,7 @@
 import os
 import sys
+
+import h5py
 import pydub
 import numpy as np
 from pydub import effects
@@ -20,21 +22,28 @@ def fft_singal(singal, pre_frame, window_size=512, shift_size=160, window_func=(
     singal = pre_frame(singal) if pre_frame is not None else singal
     frames = python_speech_features.sigproc.framesig(singal, window_size, shift_size, window_func)
     complex_spec = np.fft.rfft(frames, nfft)
-    return complex_spec
+    return complex_spec.astype('complex64')
+
+
+def fbank_from_complex_spec(complex_spec, nfilt=64, nfft=512, sample_rate=16000):
+    power = 1 / nfft * np.square(complex_spec)
+    fb = python_speech_features.get_filterbanks(nfilt, nfft, sample_rate)
+    feat = np.dot(power, fb.T)
+    feat = np.where(feat == 0, np.finfo(float).eps, feat)
+    return feat
 
 
 def process_data(file_list, output_path):
-    ret = []
-    for filename in file_list:
-        try:
-            signal = load_file(filename, 'wav')
-            complex_spec = fft_singal(signal, None)
-            ret.append(complex_spec)
-        except:
-            pass
-
-    ret = np.array(ret)
-    np.save(output_path, ret)
+    with h5py.File(output_path, 'w') as output_file:
+        for filename in file_list:
+            try:
+                signal = load_file(filename, 'wav')
+                complex_spec = fft_singal(signal, None)
+                fbank = fbank_from_complex_spec(complex_spec, 64, 512)
+                output_file[filename + '_spec'] = complex_spec
+                output_file[filename + '_fbank'] = fbank
+            except:
+                pass
 
 
 def walk_path(base_path):
