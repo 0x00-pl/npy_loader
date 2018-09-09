@@ -26,24 +26,38 @@ def fft_singal(singal, pre_frame, window_size=512, shift_size=160, window_func=(
 
 
 def fbank_from_complex_spec(complex_spec, nfilt=64, nfft=512, sample_rate=16000):
-    power = 1 / nfft * np.square(complex_spec)
+    power = 1 / nfft * np.square(complex_spec).real
     fb = python_speech_features.get_filterbanks(nfilt, nfft, sample_rate)
     feat = np.dot(power, fb.T)
     feat = np.where(feat == 0, np.finfo(float).eps, feat)
     return feat
 
 
+def dleta_fbank(feat):
+    last = np.zeros(feat[0].shape)
+    ret = np.zeros(feat.shape)
+    for item, idx in zip(feat, range(feat.shape[0])):
+        dleta = item - last
+        ret[idx, :] = dleta
+    return ret
+
+
 def process_data(file_list, output_path):
-    with h5py.File(output_path, 'w') as output_file:
-        for filename in file_list:
-            try:
-                signal = load_file(filename, 'wav')
-                complex_spec = fft_singal(signal, None)
-                fbank = fbank_from_complex_spec(complex_spec, 64, 512)
-                output_file[filename + '_spec'] = complex_spec
-                output_file[filename + '_fbank'] = fbank
-            except:
-                pass
+    output_file = h5py.File(output_path, 'w')
+    for filename in file_list:
+        try:
+            signal = load_file(filename, 'wav')
+            complex_spec = fft_singal(signal, None)
+            fbank = fbank_from_complex_spec(complex_spec, 64, 512)
+            dleta1 = dleta_fbank(fbank)
+            dleta2 = dleta_fbank(dleta1)
+            output_file[filename + '_spec'] = complex_spec
+            output_file[filename + '_fbank'] = fbank
+            output_file[filename + '_dleta1'] = dleta1
+            output_file[filename + '_dleta2'] = dleta2
+        except Exception as e:
+            print('[error]', filename, e)
+            pass
 
 
 def walk_path(base_path):
@@ -55,5 +69,5 @@ def walk_path(base_path):
 
 if __name__ == '__main__':
     file_list = walk_path(sys.argv[1])
-    output_file = sys.argv[2]
-    process_data(file_list, output_file)
+    output_path = sys.argv[2]
+    process_data(file_list, output_path)
