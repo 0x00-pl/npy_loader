@@ -30,7 +30,7 @@ def fbank_from_complex_spec(complex_spec, nfilt=64, nfft=512, sample_rate=16000)
     fb = python_speech_features.get_filterbanks(nfilt, nfft, sample_rate)
     feat = np.dot(power, fb.T)
     feat = np.where(feat == 0, np.finfo(float).eps, feat)
-    return feat
+    return feat.astype('float32')
 
 
 def dleta_fbank(feat):
@@ -39,7 +39,7 @@ def dleta_fbank(feat):
     for item, idx in zip(feat, range(feat.shape[0])):
         dleta = item - last
         ret[idx, :] = dleta
-    return ret
+    return ret.astype('float32')
 
 
 def process_data(file_list, output_path):
