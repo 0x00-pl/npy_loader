@@ -6,6 +6,7 @@ import pydub
 import numpy as np
 from pydub import effects
 import python_speech_features
+from multiprocessing import Pool
 
 
 def load_file(filename, file_format, frame_rate=16000):
@@ -42,22 +43,33 @@ def dleta_fbank(feat):
     return ret.astype('float32')
 
 
-def process_data(file_list, output_path):
-    output_file = h5py.File(output_path, 'w')
-    for filename in file_list:
+def process_data_single(filename):
         try:
             signal = load_file(filename, 'wav')
             complex_spec = fft_singal(signal, None)
             fbank = fbank_from_complex_spec(complex_spec, 64, 512)
             dleta1 = dleta_fbank(fbank)
             dleta2 = dleta_fbank(dleta1)
-            output_file[filename + '_spec'] = complex_spec
-            output_file[filename + '_fbank'] = fbank
-            output_file[filename + '_dleta1'] = dleta1
-            output_file[filename + '_dleta2'] = dleta2
+            return [filename, complex_spec, fbank, dleta1, dleta2]
         except Exception as e:
             print('[error]', filename, e)
-            pass
+            return None
+
+
+def process_data(file_list, output_path):
+    output_file = h5py.File(output_path, 'w')
+
+    def save_data(args):
+        if args is None:
+            return
+        [filename, complex_spec, fbank, dleta1, dleta2] = args
+        output_file[filename + '_spec'] = complex_spec
+        output_file[filename + '_fbank'] = fbank
+        output_file[filename + '_dleta1'] = dleta1
+        output_file[filename + '_dleta2'] = dleta2
+
+    with Pool(processes=3) as pool:
+        pool.map_async(process_data_single, file_list, callback=save_data)
 
 
 def walk_path(base_path):
