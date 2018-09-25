@@ -1,12 +1,12 @@
 import os
 import sys
+from multiprocessing import Pool
 
 import h5py
-import pydub
 import numpy as np
-from pydub import effects
+import pydub
 import python_speech_features
-from multiprocessing import Pool
+from pydub import effects
 
 
 def load_file(filename, file_format, frame_rate=16000):
@@ -44,16 +44,16 @@ def dleta_fbank(feat):
 
 
 def process_data_single(filename):
-        try:
-            signal = load_file(filename, 'wav')
-            complex_spec = fft_singal(signal, None)
-            fbank = fbank_from_complex_spec(complex_spec, 64, 512)
-            dleta1 = dleta_fbank(fbank)
-            dleta2 = dleta_fbank(dleta1)
-            return [filename, complex_spec, fbank, dleta1, dleta2]
-        except Exception as e:
-            print('[error]', filename, e)
-            return None
+    try:
+        signal = load_file(filename, 'wav')
+        complex_spec = fft_singal(signal, None)
+        fbank = fbank_from_complex_spec(complex_spec, 64, 512)
+        dleta1 = dleta_fbank(fbank)
+        dleta2 = dleta_fbank(dleta1)
+        return [filename, complex_spec, fbank, dleta1, dleta2]
+    except Exception as e:
+        print('[error]', filename, e)
+        return None
 
 
 def process_data(file_list, output_path):
