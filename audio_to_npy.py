@@ -69,7 +69,7 @@ def process_data(file_list, output_path):
         output_file[filename + '_dleta2'] = dleta2
 
     with Pool(processes=3) as pool:
-        pool.map_async(process_data_single, file_list, callback=save_data)
+        pool.map_async(process_data_single, file_list, callback=save_data).wait(tmeout=60)
 
 
 def walk_path(base_path):
