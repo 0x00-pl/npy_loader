@@ -67,9 +67,11 @@ def process_data(file_list, output_path):
         output_file[filename + '_fbank'] = fbank
         output_file[filename + '_dleta1'] = dleta1
         output_file[filename + '_dleta2'] = dleta2
+        print(filename, 'done')
 
-    with Pool(processes=3) as pool:
-        pool.map_async(process_data_single, file_list, callback=save_data).wait(tmeout=60)
+    with Pool(processes=10) as pool:
+        for res in pool.imap(process_data_single, file_list):
+            save_data(res)
 
 
 def walk_path(base_path):
