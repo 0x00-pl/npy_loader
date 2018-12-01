@@ -65,8 +65,8 @@ def process_data(file_list, output_path):
         [filename, complex_spec, fbank, dleta1, dleta2] = args
         output_file[filename + '_spec'] = complex_spec
         output_file[filename + '_fbank'] = fbank
-        output_file[filename + '_dleta1'] = dleta1
-        output_file[filename + '_dleta2'] = dleta2
+        output_file[filename + '_delta1'] = dleta1
+        output_file[filename + '_delta2'] = dleta2
         print(filename, 'done')
 
     with Pool(processes=10) as pool:
