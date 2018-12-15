@@ -81,7 +81,10 @@ def walk_path(base_path):
     return ret
 
 
-if __name__ == '__main__':
-    file_list = walk_path(sys.argv[1])
-    output_path = sys.argv[2]
+def main(file_list_path, output_path):
+    file_list = walk_path(file_list_path)
     process_data(file_list, output_path)
+
+
+if __name__ == '__main__':
+    main(sys.argv[1], sys.argv[2])
